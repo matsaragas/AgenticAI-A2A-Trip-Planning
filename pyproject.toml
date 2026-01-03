@@ -1,0 +1,13 @@
+[project]
+name = "adk-fullstack"
+version = "0.1.0"
+description = "agentic-ai-adk-a2a"
+dependencies = [
+    "a2a-sdk>=0.2.5",
+    "fastapi>=0.116.0",
+    "uvicorn>=0.35.0",
+    "pydantic>=2.11.7",
+    "pydantic-settings>=2.10.1",
+    "google-adk",
+    "gradio>=5.30.0"
+]
