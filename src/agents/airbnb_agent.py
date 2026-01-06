@@ -12,7 +12,7 @@ from langchain_core.runnables.config import (
     RunnableConfig,
 )
 from langchain_core.messages import AIMessage, AIMessageChunk
-
+from pydantic import BaseModel
 
 class ResponseFormat(BaseModel):
     """Respond to the user in this format."""
@@ -41,6 +41,8 @@ class AirbnbAgent:
         'Select status as "input_required" if you need more information from the user or are asking a clarifying question. '
         'Select status as "error" if an error occurred or the request cannot be fulfilled.'
     )
+
+    SUPPORTED_CONTENT_TYPES = ['text', 'text/plain']
 
 
 

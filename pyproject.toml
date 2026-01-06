@@ -9,5 +9,11 @@ dependencies = [
     "pydantic>=2.11.7",
     "pydantic-settings>=2.10.1",
     "google-adk",
-    "gradio>=5.30.0"
+    "gradio>=5.30.0",
+    "langchain-google-genai>=2.1.5",
+    "langchain-mcp-adapters>=0.1.0",
+    "langchain-google-vertexai>=2.0.24",
+    "langgraph>=0.4.5",
+    "mcp>=1.5.0",
+    "litellm"
 ]
