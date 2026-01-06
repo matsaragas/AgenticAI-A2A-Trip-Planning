@@ -3,3 +3,6 @@ An Agentic-AI framework with ADK-A2A and MCP for trip planning. This is an agent
 capable to search for accommodation, check the weather and propose sightseeing 
 in a particular destination. 
 
+
+
+
