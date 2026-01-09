@@ -1,9 +1,12 @@
+
+# pylint: disable=logging-fstring-interpolation
+
 import asyncio
 import os
 import sys
 
 from contextlib import asynccontextmanager
-from typing import Any, List, Dict
+from typing import Any
 
 import click
 import uvicorn
@@ -25,6 +28,7 @@ from airbnb_agent import (
 from dotenv import load_dotenv
 from langchain_mcp_adapters.client import MultiServerMCPClient
 
+
 load_dotenv(override=True)
 
 SERVER_CONFIGS = {
@@ -35,7 +39,6 @@ SERVER_CONFIGS = {
     },
 }
 
-
 app_context: dict[str, Any] = {}
 
 
@@ -43,13 +46,18 @@ DEFAULT_HOST = '0.0.0.0'
 DEFAULT_PORT = 10002
 DEFAULT_LOG_LEVEL = 'info'
 
+
 @asynccontextmanager
-async def app_lifespan(context: Dict[str, Any]):
+async def app_lifespan(context: dict[str, Any]):
     """Manages the lifecycle of shared resources like the MCP client and tools."""
     print('Lifespan: Initializing MCP client and tools...')
+
+    # This variable will hold the MultiServerMCPClient instance
     mcp_client_instance: MultiServerMCPClient | None = None
 
     try:
+        # Following Option 1 from the error message for MultiServerMCPClient initialization:
+        # 1. client = MultiServerMCPClient(...)
         mcp_client_instance = MultiServerMCPClient(SERVER_CONFIGS)
         mcp_tools = await mcp_client_instance.get_tools()
         context['mcp_tools'] = mcp_tools
@@ -58,18 +66,19 @@ async def app_lifespan(context: Dict[str, Any]):
         print(
             f'Lifespan: MCP Tools preloaded successfully ({tool_count} tools found).'
         )
-        yield
-
+        yield  # Application runs here
     except Exception as e:
         print(f'Lifespan: Error during initialization: {e}', file=sys.stderr)
+        # If an exception occurs, mcp_client_instance might exist and need cleanup.
+        # The finally block below will handle this.
         raise
     finally:
         print('Lifespan: Shutting down MCP client...')
-        # Check if the MultiServerMCPClient instance was created
-        # The original code called __aexit__ on the MultiServerMCPClient instance
-        # (which was mcp_client_manager). We assume this is still the correct cleanup method.
-        if (mcp_client_instance
-        ):
+        if (
+                mcp_client_instance
+        ):  # Check if the MultiServerMCPClient instance was created
+            # The original code called __aexit__ on the MultiServerMCPClient instance
+            # (which was mcp_client_manager). We assume this is still the correct cleanup method.
             if hasattr(mcp_client_instance, '__aexit__'):
                 try:
                     print(
@@ -84,31 +93,40 @@ async def app_lifespan(context: Dict[str, Any]):
                         f'Lifespan: Error during MCP client __aexit__: {e}',
                         file=sys.stderr,
                     )
-
             else:
+                # This would be unexpected if only the context manager usage changed.
+                # Log an error as this could lead to resource leaks.
                 print(
                     f'Lifespan: CRITICAL - {type(mcp_client_instance).__name__} instance does not have __aexit__ method for cleanup. Resource leak possible.',
                     file=sys.stderr,
                 )
-
         else:
+            # This case means MultiServerMCPClient() constructor likely failed or was not reached.
             print(
                 'Lifespan: MCP Client instance was not created, no shutdown attempt via __aexit__.'
             )
 
+        # Clear the application context as in the original code.
         print('Lifespan: Clearing application context.')
         context.clear()
 
+
 def main(
         host: str = DEFAULT_HOST,
-        port: str = DEFAULT_PORT,
-        log_level: str = DEFAULT_LOG_LEVEL
+        port: int = DEFAULT_PORT,
+        log_level: str = DEFAULT_LOG_LEVEL,
 ):
-    if os.getenv('GOOGLE_GENAI_USE_VERTEXAI') != 'TRUE' and not os.getenv('GOOGLE_API_KEY'):
+    """Command Line Interface to start the Airbnb Agent server."""
+    # Verify an API key is set.
+    # Not required if using Vertex AI APIs.
+    if os.getenv('GOOGLE_GENAI_USE_VERTEXAI') != 'TRUE' and not os.getenv(
+            'GOOGLE_API_KEY'
+    ):
         raise ValueError(
             'GOOGLE_API_KEY environment variable not set and '
             'GOOGLE_GENAI_USE_VERTEXAI is not TRUE.'
         )
+
     async def run_server_async():
         async with app_lifespan(app_context):
             if not app_context.get('mcp_tools'):
@@ -116,7 +134,9 @@ def main(
                     'Warning: MCP tools were not loaded. Agent may not function correctly.',
                     file=sys.stderr,
                 )
+                # Depending on requirements, you could sys.exit(1) here
 
+            # Initialize AirbnbAgentExecutor with preloaded tools
             airbnb_agent_executor = AirbnbAgentExecutor(
                 mcp_tools=app_context.get('mcp_tools', [])
             )
@@ -126,11 +146,15 @@ def main(
                 task_store=InMemoryTaskStore(),
             )
 
+            # Create the A2AServer instance
             a2a_server = A2AStarletteApplication(
                 agent_card=get_agent_card(host, port),
                 http_handler=request_handler,
             )
+
+            # Get the ASGI app from the A2AServer instance
             asgi_app = a2a_server.build()
+
             config = uvicorn.Config(
                 app=asgi_app,
                 host=host,
@@ -138,6 +162,7 @@ def main(
                 log_level=log_level.lower(),
                 lifespan='auto',
             )
+
             uvicorn_server = uvicorn.Server(config)
 
             print(
@@ -162,20 +187,25 @@ def main(
         else:
             print(f'RuntimeError in main: {e}', file=sys.stderr)
         sys.exit(1)
+    except Exception as e:
+        print(f'An unexpected error occurred in main: {e}', file=sys.stderr)
+        sys.exit(1)
 
 
 def get_agent_card(host: str, port: int):
+    """Returns the Agent Card for the Currency Agent."""
     capabilities = AgentCapabilities(streaming=True, push_notifications=True)
     skill = AgentSkill(
         id='airbnb_search',
         name='Search airbnb accommodation',
         description='Helps with accommodation search using airbnb',
-        tags=['airbnb accomodation'],
+        tags=['airbnb accommodation'],
         examples=[
             'Please find a room in LA, CA, April 15, 2025, checkout date is april 18, 2 adults'
         ],
     )
     app_url = os.environ.get('APP_URL', f'http://{host}:{port}')
+
     return AgentCard(
         name='Airbnb Agent',
         description='Helps with searching accommodation',
@@ -186,6 +216,7 @@ def get_agent_card(host: str, port: int):
         capabilities=capabilities,
         skills=[skill],
     )
+
 
 @click.command()
 @click.option(
@@ -213,26 +244,3 @@ def cli(host: str, port: int, log_level: str):
 
 if __name__ == '__main__':
     main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

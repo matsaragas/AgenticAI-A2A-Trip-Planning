@@ -1,6 +1,7 @@
+# pylint: disable=logging-fstring-interpolation
 import logging
 
-from typing import List, Any, override
+from typing import Any, override
 
 from a2a.server.agent_execution import AgentExecutor, RequestContext
 from a2a.server.events.event_queue import EventQueue
@@ -15,28 +16,31 @@ from airbnb_agent import (
     AirbnbAgent,
 )
 
+
 logger = logging.getLogger(__name__)
 
-class AirbnbAgentExecutor(AgentExecutor):
 
+class AirbnbAgentExecutor(AgentExecutor):
     """AirbnbAgentExecutor that uses an agent with preloaded tools."""
 
-    def __init__(self, mcp_tools: List[Any]):
+    def __init__(self, mcp_tools: list[Any]):
         """Initializes the AirbnbAgentExecutor.
 
         Args:
-            mcp_tools: A list of preloaded MCP tools for the AirbnbAgent
+            mcp_tools: A list of preloaded MCP tools for the AirbnbAgent.
         """
-
         super().__init__()
         logger.info(
             f'Initializing AirbnbAgentExecutor with {len(mcp_tools) if mcp_tools else "no"} MCP tools.'
         )
         self.agent = AirbnbAgent(mcp_tools=mcp_tools)
 
-
     @override
-    async def execute(self, context: RequestContext, event_queue: EventQueue) -> None:
+    async def execute(
+            self,
+            context: RequestContext,
+            event_queue: EventQueue,
+    ) -> None:
         query = context.get_user_input()
         task = context.current_task
 
@@ -46,8 +50,7 @@ class AirbnbAgentExecutor(AgentExecutor):
         if not task:
             task = new_task(context.message)
             await event_queue.enqueue_event(task)
-
-
+        # invoke the underlying agent, using streaming results
         async for event in self.agent.stream(query, task.context_id):
             if event['is_task_complete']:
                 await event_queue.enqueue_event(
@@ -58,7 +61,7 @@ class AirbnbAgentExecutor(AgentExecutor):
                         last_chunk=True,
                         artifact=new_text_artifact(
                             name='current_result',
-                            description='Result of request to agent',
+                            description='Result of request to agent.',
                             text=event['content'],
                         ),
                     )
@@ -68,10 +71,10 @@ class AirbnbAgentExecutor(AgentExecutor):
                         status=TaskStatus(state=TaskState.completed),
                         final=True,
                         context_id=task.context_id,
-                        task_id=task.id
+                        task_id=task.id,
                     )
                 )
-            elif event['required_user_input']:
+            elif event['require_user_input']:
                 await event_queue.enqueue_event(
                     TaskStatusUpdateEvent(
                         status=TaskStatus(
@@ -84,7 +87,7 @@ class AirbnbAgentExecutor(AgentExecutor):
                         ),
                         final=True,
                         context_id=task.context_id,
-                        task_id=task.id
+                        task_id=task.id,
                     )
                 )
             else:
@@ -100,17 +103,12 @@ class AirbnbAgentExecutor(AgentExecutor):
                         ),
                         final=False,
                         context_id=task.context_id,
-                        task_id=task.id
+                        task_id=task.id,
                     )
                 )
 
     @override
-    async def cancel(self, context: RequestContext, event_queue: EventQueue) -> None:
+    async def cancel(
+            self, context: RequestContext, event_queue: EventQueue
+    ) -> None:
         raise Exception('cancel not supported')
-
-
-
-
-
-
-
