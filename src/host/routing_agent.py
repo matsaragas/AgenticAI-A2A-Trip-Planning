@@ -95,7 +95,7 @@ class RoutingAgent:
     def create_agent(self) -> Agent:
         """Create an instance of teh RoutingAgent"""
         return Agent(
-            model='gemini-2.5-flash-lite',
+            model='gemini-2.5-flash',
             name='Routing_agent',
             instruction=self.root_instruction,
             before_model_callback=self.before_model_callback,
