@@ -16,6 +16,7 @@ from a2a.types import (
     UnsupportedOperationError,
 )
 from google.genai import types
+from a2a.utils.errors import ServerError
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -106,6 +107,44 @@ class SearchExecutor(AgentExecutor):
             updater,
         )
         logger.debug('[search] execute exiting')
+
+    async def cancel(self, context: RequestContext, event_queue: EventQueue):
+        """Cancel the execution for the given context.
+
+        Currently logs the cancellation attempt as the underlying ADK runner
+        doesn't support direct cancellation of ongoing tasks.
+        """
+        session_id = context.context_id
+        if session_id in self._active_sessions:
+            logger.info(
+                f'Cancellation requested for active search session: {session_id}'
+            )
+
+        else:
+            logger.debug(
+                f'Cancellation requested for inactive weather session: {session_id}'
+            )
+
+        raise ServerError(error=UnsupportedOperationError())
+
+    async def _upsert_session(self, session_id: str) -> 'Session':
+        """Retrieves a session if it exists, otherwise creates a new one.
+
+        Ensures that async session service methods are properly awaited.
+        """
+        session = await self.runner.session_service.get_session(
+            app_name=self.runner.app_name,
+            user_id=DEFAULT_USER_ID,
+            session_id=session_id,
+        )
+        if session is None:
+            session = await self.runner.session_service.create_session(
+                app_name=self.runner.app_name,
+                user_id=DEFAULT_USER_ID,
+                session_id=session_id,
+            )
+        return session
+
 
 def convert_a2a_part_to_genai(part: Part) -> types.Part:
     """Convert a single A2A Part type into a Google Gen AI Part type.
