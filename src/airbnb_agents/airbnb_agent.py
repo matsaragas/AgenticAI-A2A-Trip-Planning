@@ -300,44 +300,6 @@ class AirbnbAgent:
                 'require_user_input': False,
                 'content': final['structured_response'].message
             }
-            # #async for chunk in agent_runnable.astream_events(
-            # #        langgraph_input, config, version='v1', run_traced=False
-            # #):
-            #     #logger.info(f'Stream chunk for {session_id}: {chunk}')
-            #     event_name = chunk.get('event')
-            #     data = chunk.get('data', {})
-            #     content_to_yield = None
-            #
-            #     if event_name == 'on_tool_start':
-            #         tool_name = data.get('name', 'a tool')
-            #         # tool_input = data.get("input", {}) # Could be verbose
-            #         content_to_yield = f'Using tool: {tool_name}...'
-            #         logger.info(f"Using Tool {content_to_yield}")
-            #     elif event_name == 'on_chat_model_stream':
-            #         message_chunk = data.get('chunk')
-            #         logger.info(f"Message Chunk {message_chunk}")
-            #         if (
-            #                 isinstance(message_chunk, AIMessageChunk)
-            #                 and message_chunk.content
-            #         ):
-            #             content_to_yield = message_chunk.content
-            #
-            #     if content_to_yield:
-            #         yield {
-            #             'is_task_complete': False,
-            #             'require_user_input': False,
-            #             'content': content_to_yield,
-            #         }
-            #
-            # # After all events, get the final structured response from the agent's state
-            # final_response = self._get_agent_response_from_state(
-            #     config, agent_runnable
-            # )
-            # logger.info(
-            #     f'Final response from state after stream for session {session_id}: {final_response}'
-            # )
-            # yield final_response
-
         except Exception as e:
             logger.error(
                 f'Error during AirbnbAgent.stream for session {session_id}: {e}',
