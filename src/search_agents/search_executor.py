@@ -100,7 +100,7 @@ class SearchExecutor(AgentExecutor):
         await self._process_request(
             types.UserContent(
                 parts=[
-                    convert_a2a_part_to_genai(part) for part in context.mesage.parts
+                    convert_a2a_part_to_genai(part) for part in context.message.parts
                 ],
             ),
             context.context_id,

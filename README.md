@@ -11,3 +11,4 @@ to make it work in scenarios where users have multiple queries, where each query
 access to different remote agents. The proposed Agentic AI system has been enhance with an additional agent 
 that performs Google search to identify and propose venues to visit and activities to do in a country/city.
 
+![alt text](assets/trip_agent.png)
