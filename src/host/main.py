@@ -100,7 +100,7 @@ async def main():
             theme=gr.themes.Ocean(), title='A2A Host Agent with Logo'
     ) as demo:
         gr.Image(
-            'https://a2a-protocol.org/latest/assets/a2a-logo-black.svg',
+            'static/a2a.png',
             width=100,
             height=100,
             scale=0,

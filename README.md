@@ -1,4 +1,4 @@
-# AgenticAI-A2A-Trip-Planning
+# AgenticAI-A2A for Trip-Planning
 An Agentic-AI framework with ADK-A2A and MCP for trip planning. This is an agentic AI system 
 capable to search for accommodation, check the weather and propose sightseeing 
 in a particular destination. 
@@ -12,3 +12,6 @@ access to different remote agents. The proposed Agentic AI system has been enhan
 that performs Google search to identify and propose venues to visit and activities to do in a country/city.
 
 ![alt text](assets/trip_agent.png)
+
+
+![alt_text](assets/trip_agent_ui.png)
