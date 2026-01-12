@@ -4,13 +4,14 @@ from typing import Optional, Dict, Any
 
 from google.adk.agents import LlmAgent
 from google.adk.models.google_llm import Gemini
-
+from google.adk.tools import google_search
 from google.genai import types
-
+import os
+from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
 
-
+load_dotenv()
 retry_config = types.HttpRetryOptions(
     attempts=5,  # Maximum retry attempts
     exp_base=7,  # Delay multiplier
@@ -33,7 +34,7 @@ def web_search(query: str) -> Optional[str]:
     """
     serpapi_params = {
         "engine": "google",
-        "api_key": config["serpapi_key"]
+        "api_key": os.getenv('SERPAPI_KEY')
     }
     try:
         search = serpapi.search({
@@ -62,7 +63,7 @@ def web_search(query: str) -> Optional[str]:
     return contexts
 
 
-search_agent = LlmAgent(
+create_search_agent = LlmAgent(
     model=Gemini(model="gemini-2.5-flash-lite", retry_options=retry_config),
     name="Google_Search_Agent",
     description="An agent to search google and retrieve information relevant to user's queries",
@@ -70,6 +71,6 @@ search_agent = LlmAgent(
      is relevant to user's queries. Your primary function is to utilize the provided tools to retrieve information 
      in response to user queries. Ensure that all responses include the detailed output from the tools used and are 
      formatted in Markdown""",
-    tools=[web_search],
+    tools=[google_search],
 )
 

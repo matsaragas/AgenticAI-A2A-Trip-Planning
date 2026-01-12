@@ -17,5 +17,6 @@ dependencies = [
     "langgraph>=0.4.5",
     "mcp>=1.5.0",
     "litellm",
-    "geopy>=2.4.1"
+    "geopy>=2.4.1",
+    "serpapi==0.1.5",
 ]

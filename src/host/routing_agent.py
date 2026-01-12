@@ -299,6 +299,7 @@ def _get_initialized_routing_agent_sync() -> Agent:
             remote_agent_addresses=[
                 os.getenv('AIR_AGENT_URL', 'http://localhost:10002'),
                 os.getenv('WEA_AGENT_URL', 'http://localhost:10001'),
+                os.getenv('SEA_AGENT_URL', 'http://localhost:10003'),
             ]
         )
 

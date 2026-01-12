@@ -19,7 +19,7 @@ from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from search_executor import SearchExecutor
 
-from search_agent import search_agent
+from search_agent import create_search_agent
 
 load_dotenv()
 
@@ -58,3 +58,30 @@ def main(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT):
         capabilities=AgentCapabilities(streaming=True),
         skills=[skill],
     )
+    adk_agent = create_search_agent
+    runner = Runner(
+        app_name=agent_card.name,
+        agent=adk_agent,
+        artifact_service=InMemoryArtifactService(),
+        session_service=InMemorySessionService(),
+        memory_service=InMemoryMemoryService(),
+    )
+    agent_executor = SearchExecutor(runner, agent_card)
+    request_handler = DefaultRequestHandler(
+        agent_executor=agent_executor,
+        task_store=InMemoryTaskStore()
+    )
+    a2a_app = A2AStarletteApplication(
+        agent_card=agent_card, http_handler=request_handler
+    )
+    uvicorn.run(a2a_app.build(), host=host, port=port)
+
+@click.command()
+@click.option('--host', 'host', default=DEFAULT_HOST)
+@click.option('--port', 'port', default=DEFAULT_PORT)
+def cli(host: str, port: int):
+    main(host, port)
+
+
+if __name__ == '__main__':
+    main()
