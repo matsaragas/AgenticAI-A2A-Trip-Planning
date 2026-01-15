@@ -38,7 +38,7 @@ GOOGLE_API_KEY="your_api_key_here"
 
  * Create `.env` file in `host_agent/` folder with the following content:
  ```shell
- GOOGLE_API_KEY="AIzaSyCe9iFFtMhTq0kLLeKAzZBKOZ271sXo4JI"
+ GOOGLE_API_KEY="your-api-key"
 
  GOOGLE_GENAI_MODEL="gemini-2.5-flash"
  GOOGLE_GENAI_USE_VERTEXAI=FALSE
