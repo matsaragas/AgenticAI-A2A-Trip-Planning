@@ -52,6 +52,7 @@ class WeatherExecutor(AgentExecutor):
         # Update session_id with the ID from the resolved session object.
         # (it may be the same as the one passed in if it already exists)
         session_id = session_obj.id
+        logger.info(f'Session State: {session_obj.state}')
 
         # Track this session as active
         self._active_sessions.add(session_id)
@@ -62,6 +63,7 @@ class WeatherExecutor(AgentExecutor):
                     user_id=DEFAULT_USER_ID,
                     new_message=new_message,
             ):
+
                 if event.is_final_response():
                     parts = [
                         convert_genai_part_to_a2a(part)
@@ -73,6 +75,8 @@ class WeatherExecutor(AgentExecutor):
                     await task_updater.update_status(
                         TaskState.completed, final=True
                     )
+                    updated_session = await self._upsert_session(session_id)
+                    logger.info(f"Updated Session: {updated_session.state}")
                     break
                 if not event.get_function_calls():
                     logger.debug('Yielding update response')
@@ -92,6 +96,8 @@ class WeatherExecutor(AgentExecutor):
                     )
                 else:
                     logger.debug('Skipping event')
+
+
         finally:
             # Remove from active sessions when done
             self._active_sessions.discard(session_id)
@@ -102,6 +108,7 @@ class WeatherExecutor(AgentExecutor):
             event_queue: EventQueue,
     ):
         # Run the agent until either complete or the task is suspended.
+        logger.info(f'Context: {context.message}')
         updater = TaskUpdater(event_queue, context.task_id, context.context_id)
         # Immediately notify that the task is submitted.
         if not context.current_task:

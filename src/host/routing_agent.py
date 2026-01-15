@@ -184,10 +184,10 @@ class RoutingAgent:
         if agent_name not in self.remote_agent_connections:
             raise ValueError(f'Agent {agent_name} not found')
 
-
-
+        logger.info(f'Task: {task}')
 
         state = tool_context.state
+        logger.info(f"State: {state}")
         logger.info(f"Agents name {agent_name}")
 
         previous_agent = state.get('active_agent')
@@ -195,7 +195,6 @@ class RoutingAgent:
             state['context_id'] = None
             state['task_id'] = None
             #Switch agents - start new context
-
 
         state['active_agent'] = agent_name
         client = self.remote_agent_connections[agent_name]
