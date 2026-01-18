@@ -6,10 +6,11 @@ in a particular destination.
 
 
 
-Part of the code and ideas can be found [here](https://github.com/a2aproject/a2a-samples/tree/main/samples/python/agents/airbnb_planner_multiagent). However, original code has been modified to
-to make it work in scenarios where users have multiple queries, where each query can require 
-access to different remote agents. The proposed Agentic AI system has been enhance with an additional agent 
-that performs Google search to identify and propose venues to visit and activities to do in a country/city.
+Part of the code and ideas can be found [here](https://github.com/a2aproject/a2a-samples/tree/main/samples/python/agents/airbnb_planner_multiagent). 
+However, original code has been modified to make it work in scenarios where users have multiple queries, 
+where each query requires access to different remote agents. 
+The proposed Agentic AI system has been enhanced with an additional agent 
+that performs Google search to identify and propose venues to visit and activities to do in a city.
 
 ![alt text](assets/trip_agent.png)
 
@@ -84,3 +85,44 @@ ___
 ```shell
 http://localhost:8083/
 ```
+
+
+## How SDK and A2A Operate
+___
+
+We provide a question that requires the use of two different agent to generate an answer:
+
+**Question**:`provide a list of airbnb accommodations in France, Paris. Check-in Date: 3 February 2026 and check-out day: 8 Feb 2026. Also, make some suggestion on exhibitions worth visiting there?`
+
+
+The host agent breaks the question into two Parts:
+
+* **Airbnb Agent Part**
+  ```shell
+  Part(
+      function_call=FunctionCall(
+        args={
+          'agent_name': 'Airbnb Agent',
+          'task': 'Provide a list of airbnb accommodations in France, Paris. Check-in Date: 3 February 2026 and check-out day: 8 Feb 2026.'
+        },
+        id='adk-6c66c046-54c5-4f40-97f8-0af885ed3527',
+        name='send_message'
+      ),
+  )
+  ```
+
+* **Google Search Agent Part**
+
+  ```shell
+  Part(
+      function_call=FunctionCall(
+        args={
+          'agent_name': 'Search Agent',
+          'task': 'Suggest exhibitions worth visiting in Paris in February 2026.'
+       },
+       id='adk-febcd5a8-ccc6-4388-8a19-fab8a2189cbe',
+       name='send_message'
+      )
+  )
+
+  ```

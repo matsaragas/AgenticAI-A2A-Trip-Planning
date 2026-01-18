@@ -1,6 +1,6 @@
 import asyncio
 import traceback  # Import the traceback module
-
+import logging
 from collections.abc import AsyncIterator
 from pprint import pformat
 
@@ -14,6 +14,8 @@ from routing_agent import (
     root_agent as routing_agent,
 )
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 APP_NAME = 'routing_app'
 USER_ID = 'default_user'
@@ -42,6 +44,7 @@ async def get_response_from_agent(
         )
 
         async for event in event_iterator:
+            logger.info(f"Event: {event}")
             if event.content and event.content.parts:
                 for part in event.content.parts:
                     if part.function_call:
