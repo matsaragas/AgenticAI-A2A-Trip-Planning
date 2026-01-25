@@ -374,6 +374,103 @@ format:
     }
   }
 }
-
 ```
 
+
+Then, the host agent send the payload of the corresponding part to Airbnb agent, which he responds
+as following:
+
+```python
+"id": "d8e364ae-545c-4ed4-a5f6-e1a9798bd395",
+  "jsonrpc": "2.0",
+  "result": {
+    "artifacts": [
+      {
+        "artifactId": "9aa187da-9013-4252-9843-abcd051bcfc1",
+        "description": "Result of request to agent.",
+        "name": "current_result",
+        "parts": [
+          {
+            "kind": "text",
+            "text": "Here are some Airbnb accommodations in Paris, France, for your requested dates (February 3, 2026 - February 8, 2026):\n\n* ...bla bla bla"  }
+        ]
+      }
+    ],
+    "contextId": "c9839fb3-d685-4a50-ada5-35e3c825350e",
+    "history": [
+      {
+        "contextId": "c9839fb3-d685-4a50-ada5-35e3c825350e",
+        "kind": "message",
+        "messageId": "d8e364ae-545c-4ed4-a5f6-e1a9798bd395",
+        "parts": [
+          {
+            "kind": "text",
+            "text": "Provide a list of airbnb accommodations in France, Paris. Check-in Date: 3 February 2026 and check-out day: 8 Feb 2026."
+          }
+        ],
+        "role": "user",
+        "taskId": "d3207575-c367-4e4d-b59c-c0a4b6df5875"
+      }
+    ],
+    "id": "d3207575-c367-4e4d-b59c-c0a4b6df5875",
+    "kind": "task",
+    "status": {
+      "state": "completed"
+    }
+  }
+}
+```
+
+The host Agent then receives both responses and create a new event which looks like:
+
+```python
+INFO:__main__:Event: model_version=None content=Content(
+  parts=[
+    Part(
+      function_response=FunctionResponse(
+        id='adk-d0542db6-c2b1-49c6-b492-04a163cbbcfd',
+        name='send_message',
+        response={
+          'result': """Response from Airbnb Agent: Here are some Airbnb accommodations in Paris, France, for your requested dates (February 3, 2026 - February 8, 2026):
+
+*   **Quiet Room for 1 person with kitchenette**
+    *   **Description:** 1 single bed, Business host
+    *   **Rating:** 4.44 out of 5 (32 reviews)
+    *   **Price:** 
+
+
+£147 total
+    *   **Link:** https://www.airbnb.com/rooms/46593858
+
+*   **Studio Voltaire**
+    *   **Description:** 1 bedroom, 1 queen bed, Business host
+    *   **Rating:** 4.73 out of 5 (33 reviews) - Guest favourite
+    *   **Price:** 
+
+..... bla bla bla
+
+You can also view all search results at: https://www.airbnb.com/s/Paris%2C%20France/homes?checkin=2026-02-03&checkout=2026-02-08&adults=1&children=0&infants=0&pets=0"""
+        }
+      )
+    ),
+    Part(
+      function_response=FunctionResponse(
+        id='adk-6a7ad0ee-ec50-431c-9644-90a53e105ab6',
+        name='send_message',
+        response={
+          'result': """Response from Search Agent: Here are some exhibitions worth visiting in Paris in February 2026:
+
+*   **Leonora Carrington** at the Musée du Luxembourg, from February 18 to July 19, 2026. .... bla bla bla
+*   **Facing the Sky: Paul Huet in His Time"** at the Musée de la Vie Romantique, from February 14 to August 31, 2026.
+....bla bla bla
+        }
+      )
+    ),
+  ],
+  role='user'
+) grounding_metadata=None partial=None .....
+```
+
+
+Them if the event generated is the final response: `if event.if_final_response():` we concatenate the 
+information in the parts (output from both agents) and yield it to the UI for the final response. 
