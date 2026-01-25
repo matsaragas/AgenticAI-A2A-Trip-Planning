@@ -228,15 +228,53 @@ http://localhost:10002/.well-known/agent-card.json:
              'tags': ['airbnb accommodation']}], 'url': 'http://0.0.0.0:10002', 'version': '1.0.0'}
 ```
 
-We provide a question that requires the use of two different agent to generate an answer:
+
+When we initialize our host agent (`uv run main.py`), we create an ADK session. A session is a container 
+for conversations. It encapsulates the conversation history in a chronological manner and also 
+records all tool interactions and responses for a single, continuous conversations. A session is tied to a user and agent; 
+it is not shared with other users. Similarly, a session history for an agent is not shared with other 
+agents. In ADK, a session is comprised of two key components, `Events` and `State`:
+
+* **Session.Events:**
+  While a session is a container for conversations, `Events` are the building blocks of a conversation.
+  
+  Examples of Events:
+  * User Input: A message from the user (text, audio, image, etc.)
+  * Agent Response: The Agent's reply to the user
+  * Tool Call: The Agent's decision to use an external tool or API
+  * Tool Output: The data returned from a tool call, which the agent uses to continue its reasoning
+
+* **Session.State:**
+  `session.state` is the Agent's scratchpad, where it stores and updates dynamic details needed 
+  during the conversation. 
+
+To manage Sessions and events, ADK offers a `Session Manager` and `Runner`:
+
+1. **SessionService**: The storage layer
+    *  Manages creation, storage, and retrieval of session data
+    * Different implementations for different needs (memory, database, cloud)
+    
+2. **Runner**: The orchestration layer
+
+   * Manages the flow of information between user and agent
+   * Automatically maintains conversation history
+   * Handles the Context Engineering behind the scenes
+
+
+After, we have intialize the host agent, we provide a complex question that requires the use of two different agent to generate an answer:
 
 **Question**:`provide a list of airbnb accommodations in France, Paris. Check-in Date: 3 February 2026 and check-out day: 8 Feb 2026. Also, make some suggestion on exhibitions worth visiting there?`
 
 
-The host agent breaks the question into two Parts:
+In the first `Event` of the `Session`, the host agent breaks the question into two `Parts`:
+
+
+
 
 * **Airbnb Agent Part**
   ```shell
+  INFO:__main__:Event: model_version='gemini-2.5-flash' content=Content(
+  parts=[
   Part(
       function_call=FunctionCall(
         args={
@@ -246,7 +284,19 @@ The host agent breaks the question into two Parts:
         id='adk-6c66c046-54c5-4f40-97f8-0af885ed3527',
         name='send_message'
       ),
-  )
+  ),
+  Part(
+      function_call=FunctionCall(
+        args={
+          'agent_name': 'Search Agent',
+          'task': 'Suggest exhibitions worth visiting in Paris in February 2026.'
+        },
+        id='adk-6a7ad0ee-ec50-431c-9644-90a53e105ab6',
+        name='send_message'
+      )
+    ),
+  ],
+  role='model'
   ```
 
 * **Google Search Agent Part**
@@ -264,3 +314,66 @@ The host agent breaks the question into two Parts:
   )
 
   ```
+  
+For each one of these `Parts` the host agent is using the `send_message` tool to send the task to the 
+agents identified to cover the particular part. There a payload is created with a message that describes 
+the role , parts and message id:
+
+```python
+payload = {
+            'message': {
+                'role': 'user',
+                'parts': [
+                    {'type': 'text', 'text': task}
+                ],  # Use the 'task' argument here
+                'messageId': message_id,
+            },
+        }
+```
+
+After, we send the payload, initially to the search agent, we get a response from the agent in a jsonrpc 
+format:
+
+```python
+{
+  "id": "099cbad8-168e-45e7-b438-5334d19b0c3d",
+  "jsonrpc": "2.0",
+  "result": {
+    "artifacts": [
+      {
+        "artifactId": "3a8a5737-9703-46cd-b624-60960338c39c",
+        "parts": [
+          {
+            "kind": "text",
+            "text": "Here are some exhibitions worth visiting in Paris in February 2026 .... bla bla bla"
+          }
+        ]
+      }
+    ],
+    "contextId": "446aacd4-556c-4223-9a48-ce9ec4e51fb5",
+    "history": [
+      {
+        "contextId": "446aacd4-556c-4223-9a48-ce9ec4e51fb5",
+        "kind": "message",
+        "messageId": "099cbad8-168e-45e7-b438-5334d19b0c3d",
+        "parts": [
+          {
+            "kind": "text",
+            "text": "Suggest exhibitions worth visiting in Paris in February 2026."
+          }
+        ],
+        "role": "user",
+        "taskId": "5ac4e766-a7fc-4835-80e8-a37a16c865db"
+      }
+    ],
+    "id": "5ac4e766-a7fc-4835-80e8-a37a16c865db",
+    "kind": "task",
+    "status": {
+      "state": "completed",
+      "timestamp": "2026-01-24T23:13:19.921772+00:00"
+    }
+  }
+}
+
+```
+
